@@ -2,10 +2,10 @@
 #include <GLFW/glfw3.h>
 
 #include <iostream>
-using std::chrono::duration_cast;
-using std::chrono::milliseconds;
-using std::chrono::seconds;
-using std::chrono::system_clock;
+#include <chrono>
+
+using namespace std::chrono;
+
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
@@ -71,7 +71,6 @@ int main()
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
-
 
     // build and compile our shader program
     // ------------------------------------
@@ -152,8 +151,11 @@ int main()
     // render loop
     // -----------
 
-    //fix start time
-    float time = 0.0;
+    // this is needed to supplay u_time to shaders
+    auto start = duration_cast< milliseconds >(
+        system_clock::now().time_since_epoch()
+    );
+
 
     while (!glfwWindowShouldClose(window))
     {
@@ -168,10 +170,13 @@ int main()
 
         // set uniform
         glUniform2f(resolutionLoc, float(scr_width), float(scr_height));
-
-        //set end time
-        time = time + 0.01;
-        glUniform1f(timeLoc,  time);
+        
+        //set up and send u_time uniform
+        auto now = duration_cast< milliseconds >(
+            system_clock::now().time_since_epoch()
+        );
+        float elapsed = (now - start).count() / 1000.0;
+        glUniform1f(timeLoc,  elapsed);
 
         // draw our first triangle
         glUseProgram(shaderProgram);
